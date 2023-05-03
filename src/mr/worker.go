@@ -14,7 +14,6 @@ import (
 
 // KeyValue
 // Map functions return a slice of KeyValue.
-//
 type KeyValue struct {
 	Key   string
 	Value string
@@ -26,10 +25,8 @@ func (a ByKey) Len() int           { return len(a) }
 func (a ByKey) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByKey) Less(i, j int) bool { return a[i].Key < a[j].Key }
 
-//
 // use ihash(key) % NReduce to choose the reduce
 // task number for each KeyValue emitted by Map.
-//
 func ihash(key string) int {
 	h := fnv.New32a()
 	h.Write([]byte(key))
@@ -38,7 +35,6 @@ func ihash(key string) int {
 
 // Worker
 // main/mrworker.go calls this function.
-//
 func Worker(mapf func(string, string) []KeyValue,
 	reducef func(string, []string) string) {
 	var newTask TaskTodo
@@ -125,7 +121,7 @@ func Worker(mapf func(string, string) []KeyValue,
 
 				i = j
 			}
-			finishedTask = TaskDone{DoneType: TaskTypeReduce}
+			finishedTask = TaskDone{DoneType: TaskTypeReduce, ID: newTask.ID, Files: []string{oname}}
 		case TaskTypeSleep:
 			time.Sleep(500 & time.Millisecond)
 			finishedTask = TaskDone{DoneType: TaskTypeNone}
@@ -148,7 +144,6 @@ func Worker(mapf func(string, string) []KeyValue,
 // example function to show how to make an RPC call to the coordinator.
 //
 // the RPC argument and reply types are defined in rpc.go.
-//
 func CallMaster(finishedTask *TaskDone) TaskTodo {
 
 	// declare a reply structure.
@@ -158,7 +153,7 @@ func CallMaster(finishedTask *TaskDone) TaskTodo {
 	// the "Coordinator.Example" tells the
 	// receiving server that we'd like to call
 	// the Example() method of struct Coordinator.
-	ok := call("Coordinator.getTask", finishedTask, &reply)
+	ok := call("Coordinator.GetTask", finishedTask, &reply)
 	if !ok {
 		fmt.Printf("call failed!\n")
 		os.Exit(0)
@@ -166,11 +161,9 @@ func CallMaster(finishedTask *TaskDone) TaskTodo {
 	return reply
 }
 
-//
 // send an RPC request to the coordinator, wait for the response.
 // usually returns true.
 // returns false if something goes wrong.
-//
 func call(rpcname string, args interface{}, reply interface{}) bool {
 	// c, err := rpc.DialHTTP("tcp", "127.0.0.1"+":1234")
 	sockname := coordinatorSock()
